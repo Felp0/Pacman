@@ -200,7 +200,7 @@ void Pacman::Update(int elapsedTime)
 					{
 						_pacman->position->Y -= 10;
 					}
-				}
+				}//ball
 			}
 
 		}
