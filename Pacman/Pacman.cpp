@@ -82,7 +82,7 @@ void Pacman::LoadContent()
 	_menu->stringPosition = new Vector2(Graphics::GetViewportWidth() / 2.0f, Graphics::GetViewportHeight() / 2.0f);
 	// Load Pacman
 	_pacman->texture = new Texture2D();
-	_pacman->texture->Load("Textures/Pacman.tga", false);
+	_pacman->texture->Load("Textures/sprites.png", false);
 	_pacman->position = new Vector2(350.0f, 350.0f);
 	_pacman->sourceRect = new Rect(0.0f, 0.0f, 32, 32);
 
@@ -161,8 +161,7 @@ void Pacman::Update(int elapsedTime)
 			//Check functions
 			CheckViewPortCollision();
 
-			//Sprite functions
-			UpdatePacman(elapsedTime);
+			
 
 
 			for (int i = 0; i < MUNCHIECOUNT; i++)
@@ -241,10 +240,6 @@ void Pacman::UpdateMunchie(Enemy* munchie, int elapsedTime)
 
 void Pacman::UpdatePacman(int elapsedTime)
 	 {
-		 //Change pacman sprite
-		 _pacman->sourceRect->Y = _pacman->sourceRect->Height * _pacman->direction;
-
-		 _pacman->sourceRect->X = _pacman->sourceRect->Width * _pacman->frame;
 
 
 		 //Frame Time
@@ -258,6 +253,10 @@ void Pacman::UpdatePacman(int elapsedTime)
 
 			 _pacman->currentFrameTime = 0;
 		 }
+		 //Change pacman sprite
+		 _pacman->sourceRect->Y = _pacman->sourceRect->Height * _pacman->direction;
+
+		 _pacman->sourceRect->X = _pacman->sourceRect->Width * _pacman->frame;
 	 }
 
 void Pacman::CheckViewPortCollision()
@@ -357,30 +356,34 @@ void Pacman::Input(int elapsedTime, Input::KeyboardState* kState, Input::MouseSt
 	{
 		_pacman->position->X += pacmanSpeed;
 		_pacman->direction = 0;
+		UpdatePacman(elapsedTime);
 	}
 	// Checks if A key is pressed
 	else if (keyboardState->IsKeyDown(Input::Keys::A))
 	{
 		_pacman->position->X -= pacmanSpeed;
 		_pacman->direction = 2;
+		UpdatePacman(elapsedTime);
 	}
 	// Checks if W key is pressed
 	else if (keyboardState->IsKeyDown(Input::Keys::W))
 	{
 		_pacman->position->Y -= pacmanSpeed;
 		_pacman->direction = 3;
+		UpdatePacman(elapsedTime);
 	}
 	// Checks if S key is pressed
 	else if (keyboardState->IsKeyDown(Input::Keys::S))
 	{
 		_pacman->position->Y += pacmanSpeed;
 		_pacman->direction = 1;
+		UpdatePacman(elapsedTime);
 	}
 
 	if (keyboardState->IsKeyDown(Input::Keys::LEFTSHIFT))
 	{
 		//Boost
-		_pacman->speedMultuplier = 5.0f;
+		_pacman->speedMultuplier = 0.005f;
 	}
 	else
 	{
