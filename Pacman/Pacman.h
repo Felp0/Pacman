@@ -17,6 +17,7 @@ using namespace S2D;
 //Defining
 #define MUNCHIECOUNT 10
 #define BLOCKCOUNT 113
+#define GHOSTCOUNT 1
 
 // Declares the Pacman class which inherits from the Game class.
 // This allows us to overload the Game class methods to help us
@@ -27,13 +28,14 @@ struct Player
 	const float cSpeed = 0.6f;
 	const int cFrameTime = 250;
 
+	Rect* sourceRect;
+	Texture2D* texture;
+	Vector2* position;
+	bool dead;
 	float speedMultuplier;
 	int currentFrameTime;
 	int direction;
 	int frame;
-	Rect* sourceRect;
-	Texture2D* texture;
-	Vector2* position;
 };
 
 struct Enemy
@@ -70,6 +72,15 @@ struct Map
 
 };
 
+struct MovingEnemy
+{
+	Vector2* position;
+	Texture2D* texture;
+	Rect* sourceRect;
+	int direction;
+	float speed;
+};
+
 class Pacman : public Game
 {
 private:
@@ -104,6 +115,9 @@ private:
 	//Check methods
 	void CheckPaused(Input::KeyboardState* state, Input::Keys pauseKey);
 	void CheckViewPortCollision();
+	//Enemies
+	void CheckGhostCollisions();
+	void UpdateGhost(MovingEnemy*, int elapsedTime);
 
 	//Update methods
 	void UpdatePacman(int elapsedTime);
@@ -114,6 +128,7 @@ private:
 	Menu* _menu;
 	Enemy* _munchies[MUNCHIECOUNT];
 	Map* _map[BLOCKCOUNT];
+	MovingEnemy* _ghosts[GHOSTCOUNT];
 
 	//Bool for menu
 	bool _gameStarted;
