@@ -104,7 +104,7 @@ void Pacman::LoadContent()
 	_pacman->sourceRect = new Rect(0.0f, 0.0f, 32, 32);
 	// Load Ghost Character
 	_ghosts[0]->texture = new Texture2D();
-	_ghosts[0]->texture->Load("Textures / enemies.png", false);
+	_ghosts[0]->texture->Load("Textures/Enemy.png", true);
 	_ghosts[0]->position = new Vector2((rand() % Graphics::GetViewportWidth()), (rand() % Graphics::GetViewportHeight()));
 	_ghosts[0]->sourceRect = new Rect(0.0f, 0.0f, 20, 20);
 
@@ -183,11 +183,11 @@ void Pacman::Update(int elapsedTime)
 			Input(elapsedTime, kState, mState);
 
 			//Update function
-			UpdateGhost(_ghosts[0], elapsedTime);
+			UpdateGhost(elapsedTime);
 
 			//Check functions
 			CheckViewPortCollision();
-			CheckGhostCollisions();
+			CheckGhostCollisions(_ghosts[0], elapsedTime);
 
 			
 
@@ -208,6 +208,7 @@ void Pacman::Update(int elapsedTime)
 				if (CollisionCheck(_pacman->position->X, _pacman->position->Y, _pacman->sourceRect->Width, _pacman->sourceRect->Height,
 					_map[i]->position->X, _map[i]->position->Y, _map[i]->rectangle->Width, _map[i]->rectangle->Height))
 				{
+					//Hero
 					if (_pacman->direction == 0)
 					{
 						_pacman->position->X -= 10;
@@ -227,8 +228,11 @@ void Pacman::Update(int elapsedTime)
 					{
 						_pacman->position->Y -= 10;
 					}
+
+				
 				}
 			}
+
 
 		}
 	}
@@ -273,24 +277,30 @@ void Pacman::UpdatePacman(int elapsedTime)
 		 _pacman->sourceRect->X = _pacman->sourceRect->Width * _pacman->frame;
 	 }
 
-void Pacman::UpdateGhost(MovingEnemy* ghost, int elapsedTime)
+void Pacman::UpdateGhost(int elapsedTime)
 {
-	if (ghost->direction == 0)//Right
+	for (int i = 0; i < GHOSTCOUNT; i++)
 	{
-		ghost->position->X += ghost->speed * elapsedTime;
+		//Frame Time
+		_ghosts[i]->currentFrameTime += elapsedTime;
+
+		if (_ghosts[i]->currentFrameTime > _ghosts[i]->cFrametime)
+		{
+			_ghosts[i]->frame++;
+			if (_ghosts[i]->frame >= 2)
+				_ghosts[i]->frame = 0;
+
+			_ghosts[i]->currentFrameTime = 0;
+		}
+		//Changing ghost sprite
+		_ghosts[i]->sourceRect->Y = _ghosts[i]->sourceRect->Height * _ghosts[i]->direction;
+
+		_ghosts[i]->sourceRect->X = _ghosts[i]->sourceRect->Width * _ghosts[i]->frame;
 	}
-	else if(ghost->direction == 1)//Left
-	{
-		ghost->position->X -= ghost->speed * elapsedTime;
-	}
-	if (ghost->position->X + ghost->sourceRect->Width >= Graphics::GetViewportWidth()) //Hits Right edge
-	{
-		ghost->direction = 1; //Change direction
-	}
-	else if (ghost->position->X <= 0) //Hits left edge
-	{
-		ghost->direction = 0; //Change direction
-	}
+	
+
+	
+	
 }
 
 //Checks
@@ -347,7 +357,7 @@ bool Pacman::CollisionCheck(int x1, int y1, int width1, int height1,
 		return true;
 }
 
-void Pacman::CheckGhostCollisions()
+void Pacman::CheckGhostCollisions(MovingEnemy* ghost, int elapsedTime)
 {
 	//Variables
 	int i = 0;
@@ -373,6 +383,48 @@ void Pacman::CheckGhostCollisions()
 			i = GHOSTCOUNT;
 		}
 	
+		if (ghost->direction == 0)//Right
+		{
+			ghost->position->X += ghost->speed * elapsedTime;
+		}
+		else if (ghost->direction == 1)//Left
+		{
+			ghost->position->X -= ghost->speed * elapsedTime;
+		}
+		else if (ghost->direction == 2)//up
+		{
+			ghost->position->Y -= ghost->speed * elapsedTime;
+
+		}
+		else if (ghost->direction == 3)//down
+		{
+			ghost->position->Y += ghost->speed * elapsedTime;
+		}
+		for (int i = 0; i < BLOCKCOUNT; i++)
+		{
+			if (CollisionCheck(ghost->position->X, ghost->position->Y, ghost->sourceRect->Width, ghost->sourceRect->Height,
+				_map[i]->position->X, _map[i]->position->Y, _map[i]->rectangle->Width, _map[i]->rectangle->Height))
+			{
+				if (ghost->direction == 0)//Right
+				{
+					ghost->direction = 1;
+				}
+				else if(ghost->direction == 1)//Left
+				{
+					ghost->direction = 0;
+				}
+				else if (ghost->direction == 2)//up
+				{
+					ghost->direction = 3;
+
+				}
+				else if (ghost->direction == 3)//down
+				{
+					ghost->direction = 2;
+				}
+
+			}
+		}
 
 	}
 

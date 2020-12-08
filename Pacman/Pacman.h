@@ -74,10 +74,14 @@ struct Map
 
 struct MovingEnemy
 {
+	const int cFrametime = 250;
+
 	Vector2* position;
 	Texture2D* texture;
 	Rect* sourceRect;
 	int direction;
+	int currentFrameTime;
+	int frame;
 	float speed;
 };
 
@@ -116,8 +120,8 @@ private:
 	void CheckPaused(Input::KeyboardState* state, Input::Keys pauseKey);
 	void CheckViewPortCollision();
 	//Enemies
-	void CheckGhostCollisions();
-	void UpdateGhost(MovingEnemy*, int elapsedTime);
+	void CheckGhostCollisions(MovingEnemy*, int elapsedTime);
+	void UpdateGhost(int elapsedTime);
 
 	//Update methods
 	void UpdatePacman(int elapsedTime);
