@@ -15,9 +15,10 @@
 using namespace S2D;
 
 //Defining
-#define MUNCHIECOUNT 188
+#define MUNCHIECOUNT 182
 #define BLOCKCOUNT 185
 #define GHOSTCOUNT 5
+#define SPECIALMUNCHIE 5
 
 // Declares the Pacman class which inherits from the Game class.
 // This allows us to overload the Game class methods to help us
@@ -53,12 +54,28 @@ struct Enemy
 
 };
 
+struct SpecialMunchie
+{
+	const int cMunchieFrameTime = 500;
+
+	int frameCount;
+	int frame;
+	int currentFrameTime;
+	Rect* rect;
+	Texture2D* texture;
+	Texture2D* invertedTexture;
+	Vector2* position;
+
+};
+
 struct Menu 
 {
+	Texture2D* deathscreen;
 	Texture2D* background;
 	Texture2D* startGame;
 	Rect* rectangle;
 	Rect* startRectangle;
+	Rect* rect;
 	Vector2* stringPosition;
 	Vector2* startString1;
 	Vector2 startString2;
@@ -94,8 +111,8 @@ private:
 	{	1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 		1,1,2,2,2,2,2,0,0,0,0,3,0,0,0,1,2,2,2,0,0,0,0,0,0,0,0,0,0,2,2,1,
 		1,1,2,2,2,2,2,0,0,0,0,0,0,0,0,1,2,2,2,0,0,2,2,2,0,0,0,0,0,2,2,1,
-		1,1,2,2,2,2,2,0,0,0,0,0,0,0,0,1,2,2,2,0,0,2,1,2,0,0,0,0,0,2,2,1,
-		1,1,2,2,2,2,2,0,0,0,0,0,0,0,0,1,2,2,2,0,0,2,1,2,0,0,0,0,0,2,2,1,
+		1,1,4,2,2,2,2,0,0,0,0,0,0,0,0,1,2,2,2,0,0,2,1,2,0,0,0,0,0,2,2,1,
+		1,1,2,2,2,2,2,0,0,0,0,0,0,0,0,1,2,2,2,0,0,2,1,2,0,0,0,0,0,2,4,1,
 		1,1,2,2,2,2,2,0,0,0,0,0,0,0,0,1,2,2,2,0,0,2,1,2,0,0,0,0,0,2,2,1,
 		1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,2,1,3,0,0,0,0,0,2,2,1,
 		1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,2,2,1,0,0,1,1,1,1,1,0,0,0,2,2,1,
@@ -111,8 +128,8 @@ private:
 		1,0,0,0,0,0,2,0,0,0,0,0,0,1,2,2,2,0,0,0,0,0,2,2,1,1,2,0,0,0,0,1,
 		0,0,0,0,0,0,2,1,0,0,0,0,1,1,2,2,2,0,0,0,0,0,2,2,1,1,2,0,0,0,0,0,
 		0,2,2,2,2,2,2,1,0,0,0,0,1,2,2,2,0,0,0,0,0,0,2,2,1,1,2,0,0,0,0,0,
-		1,2,2,2,2,2,2,1,0,0,0,0,1,2,2,0,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,1,
-		1,2,2,2,2,2,2,1,0,0,0,0,1,2,2,0,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,1,
+		1,2,2,2,2,2,2,1,0,0,0,0,1,2,4,0,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,1,
+		1,2,2,4,2,2,2,1,0,0,0,0,1,2,2,0,0,0,0,0,0,0,2,2,1,1,2,2,4,2,2,1,
 		1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 		
 	};
@@ -127,6 +144,7 @@ private:
 	//Update methods
 	void UpdatePacman(int elapsedTime);
 	void UpdateMunchie(Enemy* munchie , int elapsedTime);
+	void UpdateSpecial(SpecialMunchie* specialMunchie, int elaspsedTime);
 
 	//Pointers (struct)
 	Player* _pacman;
@@ -134,6 +152,7 @@ private:
 	Enemy* _munchies[MUNCHIECOUNT];
 	Map* _map[BLOCKCOUNT];
 	MovingEnemy* _ghosts[GHOSTCOUNT];
+	SpecialMunchie* _specialMunchie[SPECIALMUNCHIE];
 
 	//Bool for menu
 	bool _gameStarted;

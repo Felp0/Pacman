@@ -11,9 +11,6 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 	_pacman = new Player();
 	_menu = new Menu();
 	
-
-	
-
 	//Munchies
 	for (int i = 0; i < MUNCHIECOUNT; i++)
 	{
@@ -23,6 +20,14 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 		_munchies[i]->frame = rand() % 500 * 50;
 
 	
+	}
+	//Special Munchies
+	for (int i = 0; i < SPECIALMUNCHIE; i++)
+	{
+		_specialMunchie[i] = new SpecialMunchie();
+		_specialMunchie[i]->currentFrameTime = 0;
+		_specialMunchie[i]->frameCount = 0;
+		_specialMunchie[i]->frame = rand() % 500 * 50;
 	}
 	//Map
 	for (int i = 0; i < BLOCKCOUNT; i++) {
@@ -92,13 +97,20 @@ Pacman::~Pacman()
 	}
 	delete[] _ghosts;
 	
+	for (int nCount = 0; nCount < SPECIALMUNCHIE; nCount++)
+	{
+		delete _specialMunchie[nCount]->position;
+		delete _specialMunchie[nCount]->rect;
+		delete _specialMunchie[nCount];
+	}
+	delete[] _specialMunchie;
 }
 
 void Pacman::LoadContent()
 {
 	//Set StartMenu Paramters
 	_menu->startGame = new Texture2D();
-	_menu->startGame->Load("Textures/Menu.png", false);
+	_menu->startGame->Load("Textures/Menu.jpg", true);
 	_menu->startRectangle = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
 	_menu->startString1 = new Vector2(Graphics::GetViewportWidth() / 2.0f, Graphics::GetViewportHeight() / 3.0f);
 	// Set PauseMenu Paramters
@@ -106,14 +118,19 @@ void Pacman::LoadContent()
 	_menu->background->Load("Textures/Transparency.png", false);
 	_menu->rectangle = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
 	_menu->stringPosition = new Vector2(Graphics::GetViewportWidth() / 2.0f, Graphics::GetViewportHeight() / 2.0f);
+	//Load death screen
+	_menu->deathscreen = new Texture2D();
+	_menu->deathscreen->Load("Textures/deathScreen.png", true);
+	_menu->rect = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
 	// Load Pacman
 	_pacman->texture = new Texture2D();
 	_pacman->texture->Load("Textures/sprites.png", false);
 	_pacman->position = new Vector2(350.0f, 350.0f);
 	_pacman->sourceRect = new Rect(0.0f, 0.0f, 32, 32);
+
 	// Load Ghost Character
 	Texture2D* ghostTex = new Texture2D();
-	ghostTex->Load("Textures/Enemy.png", true);
+	ghostTex->Load("Textures/Enemy.png", false);
 
 	for (int i = 0; i < GHOSTCOUNT; i++)
 	{
@@ -128,9 +145,20 @@ void Pacman::LoadContent()
 	for (int i = 0; i < MUNCHIECOUNT; i++)
 	{
 		_munchies[i]->texture = munchieTex;
-		_munchies[i]->texture->Load("Textures/Munchie.png", true);
+		_munchies[i]->texture->Load("Textures/Munchie.png", false);
 		_munchies[i]->position = new Vector2((rand() % Graphics::GetViewportWidth()), (rand() % Graphics::GetViewportHeight()));
 		_munchies[i]->rect = new Rect(0.0f, 0.0f, 12, 12);
+	}
+	//Load SpecialMunchie
+	Texture2D* specialTex = new Texture2D();
+	specialTex->Load("Textures/Scroll.png", false);
+
+	for (int i = 0; i < SPECIALMUNCHIE; i++)
+	{
+		_specialMunchie[i]->texture = specialTex;
+		_specialMunchie[i]->position = new Vector2((rand() % Graphics::GetViewportWidth()), (rand() % Graphics::GetViewportHeight()));
+		_specialMunchie[i]->rect = new Rect(0.0f, 0.0f, 12, 12);
+		
 	}
 
 	//Load map
@@ -147,18 +175,18 @@ void Pacman::LoadContent()
 	}
 
 	//Making map
-	for (int i = 0,j = 0,k = 0, ghost = 0; i < 768; i++) 
+	for (int i = 0,munchies = 0,map = 0, ghost = 0, special = 0; i < 768; i++) 
 	{
 			
 			if (aMap[i] == 1) 
 			{
-				_map[k]->position = new Vector2((i%32)*32, (i/32)*32);
-				k++;
+				_map[map]->position = new Vector2((i%32)*32, (i/32)*32);
+				map++;
 			}
 			if (aMap[i] == 2)
 			{
-				_munchies[j]->position = new Vector2((i % 32) * 32, (i / 32) * 32);
-				j++;
+				_munchies[munchies]->position = new Vector2((i % 32) * 32, (i / 32) * 32);
+				munchies++;
 
 			}
 			if (aMap[i] == 3)
@@ -166,11 +194,16 @@ void Pacman::LoadContent()
 				_ghosts[ghost]->position = new Vector2((i % 32) * 32, (i / 32) * 32);
 				ghost++;
 			}
+			if (aMap[i] == 4)
+			{
+				_specialMunchie[special]->position = new Vector2((i % 32) * 32, (i / 32) * 32);
+				special++;
+			}
 			
 
 	}
 	// Set string position
-	_stringPosition = new Vector2(10.0f, 25.0f);
+	_stringPosition = new Vector2(21.48f, 15.36f);
 
 	
 }
@@ -205,9 +238,6 @@ void Pacman::Update(int elapsedTime)
 
 			//Check functions
 			CheckViewPortCollision();
-
-			
-	
 			CheckGhostCollisions();
 			
 			
@@ -222,6 +252,18 @@ void Pacman::Update(int elapsedTime)
 					_munchies[i]->position->X = -100;
 					_munchies[i]->position->Y = -100;
 					_pacman->scoreCount++;
+				}
+			}
+
+			for (int i = 0; i < SPECIALMUNCHIE; i++)
+			{
+				UpdateSpecial(_specialMunchie[i], elapsedTime);
+				if (CollisionCheck(_pacman->position->X, _pacman->position->Y, _pacman->sourceRect->Width, _pacman->sourceRect->Height,
+					_specialMunchie[i]->position->X, _specialMunchie[i]->position->Y, _specialMunchie[i]->rect->Width, _specialMunchie[i]->rect->Height))
+				{
+					_specialMunchie[i]->position->X = -100;
+					_specialMunchie[i]->position->Y = -100;
+					_pacman->scoreCount += 100;
 				}
 			}
 
@@ -278,6 +320,19 @@ void Pacman::UpdateMunchie(Enemy* munchie, int elapsedTime)
 		munchie->rect->X = munchie->rect->Width * munchie->frameCount;
 	
  }
+void Pacman::UpdateSpecial(SpecialMunchie* specialMunchie, int elapsedTime)
+{
+	specialMunchie->currentFrameTime += elapsedTime;
+	if (specialMunchie->currentFrameTime > specialMunchie->cMunchieFrameTime)
+	{
+		specialMunchie->frameCount++;
+		if (specialMunchie->frameCount >= 2)
+			specialMunchie->frameCount = 0;
+		specialMunchie->currentFrameTime = 0;
+	}
+	//Change Munchie sprite
+	specialMunchie->rect->X = specialMunchie->rect->Width * specialMunchie->frameCount;
+}
 
 void Pacman::UpdatePacman(int elapsedTime)
 	 {
@@ -576,14 +631,6 @@ void Pacman::Draw(int elapsedTime)
 	stream << "Score:" << _pacman->scoreCount;
 
 	SpriteBatch::BeginDraw(); // Starts Drawing
-	if (_gameStarted)
-	{
-		std::stringstream startStream;
-		startStream << "MENU";
-
-		SpriteBatch::Draw(_menu->startGame, _menu->startRectangle, nullptr);
-		SpriteBatch::DrawString(startStream.str().c_str(), _menu->startString1, Color::Blue);
-	}
 	
 	 if (_paused)
 	{
@@ -593,7 +640,6 @@ void Pacman::Draw(int elapsedTime)
 		SpriteBatch::Draw(_menu->background, _menu->rectangle, nullptr);
 		SpriteBatch::DrawString(menuStream.str().c_str(), _menu->stringPosition, Color::Red);
 	}
-
 	// Draws Pacman
 	if (!_pacman->dead)
 	{
@@ -604,6 +650,11 @@ void Pacman::Draw(int elapsedTime)
 	for (int i = 0; i < MUNCHIECOUNT; i++)
 	{
 		SpriteBatch::Draw(_munchies[i]->texture, _munchies[i]->position, _munchies[i]->rect);
+	}
+	//Draws SpecialMunchie
+	for (int i = 0; i < SPECIALMUNCHIE; i++)
+	{
+		SpriteBatch::Draw(_specialMunchie[i]->texture, _specialMunchie[i]->position, _specialMunchie[i]->rect);
 	}
 	//Draws Blocks
 	for (int i = 0; i < BLOCKCOUNT; i++)
@@ -616,6 +667,19 @@ void Pacman::Draw(int elapsedTime)
 		SpriteBatch::Draw(_ghosts[i]->texture, _ghosts[i]->position, _ghosts[i]->sourceRect);
 	}
 	
+	 if (_pacman->dead)
+	 {
+		 SpriteBatch::Draw(_menu->deathscreen, _menu->rect, nullptr);
+		
+	 }
+
+	if (_gameStarted)
+	{
+		
+
+		SpriteBatch::Draw(_menu->startGame, _menu->startRectangle, nullptr);
+		
+	}
 	// Draws String
 	SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Yellow);
 	SpriteBatch::EndDraw(); // Ends Drawing
