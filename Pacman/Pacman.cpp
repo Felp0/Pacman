@@ -25,7 +25,7 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 	
 	}
 	//Map
-	for (int i = 0; i < 768; i++) {
+	for (int i = 0; i < BLOCKCOUNT; i++) {
 		{
 			_map[i] = new Map();
 		
@@ -33,10 +33,18 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 	}
 
 	//Initialise ghost character
-	_ghosts[0] = new MovingEnemy();
-	_ghosts[0]->direction = 0;
-	_ghosts[0]->speed = 0.2f;
+	for (int i = 0; i < GHOSTCOUNT; i++)
+	{
+		_ghosts[i] = new MovingEnemy();
+		_ghosts[i]->direction = 0;
+		_ghosts[i]->speed = 0.2f;
+		_ghosts[i]->frame = rand() % 500 * 50;
+		_ghosts[i]->currentFrameTime = 0;
+		 
+
 	
+	}
+
 	_paused = false;
 	_pkeyDown = false;
 	_gameStarted = true;
@@ -198,7 +206,9 @@ void Pacman::Update(int elapsedTime)
 			//Check functions
 			CheckViewPortCollision();
 
-			CheckGhostCollisions(_ghosts[0], elapsedTime);
+			
+	
+			CheckGhostCollisions();
 			
 			
 
@@ -293,7 +303,8 @@ void Pacman::UpdatePacman(int elapsedTime)
 void Pacman::UpdateGhost(int elapsedTime)
 {
 		//Frame Time
-	/*for (int i = 0; i < GHOSTCOUNT; i++)
+	for (int i = 0; i < GHOSTCOUNT; i++)
+	{
 		_ghosts[i]->currentFrameTime += elapsedTime;
 
 		if (_ghosts[i]->currentFrameTime > _ghosts[i]->cFrametime)
@@ -303,18 +314,38 @@ void Pacman::UpdateGhost(int elapsedTime)
 				_ghosts[i]->frame = 0;
 
 			_ghosts[i]->currentFrameTime = 0;
-	}*/
-	
+		}
+
 		for (int i = 0; i < GHOSTCOUNT; i++)
-		{ 
+		{
 			//Changing ghost sprite
 			_ghosts[i]->sourceRect->Y = _ghosts[i]->sourceRect->Height * _ghosts[i]->direction;
 
 			_ghosts[i]->sourceRect->X = _ghosts[i]->sourceRect->Width * _ghosts[i]->frame;
 		}
 
-	
-	
+	}
+
+	for (int i = 0; i < GHOSTCOUNT; i++)
+	{
+		if (_ghosts[i]->direction == 0)//Right
+		{
+			_ghosts[i]->position->X += _ghosts[i]->speed * elapsedTime;
+		}
+		else if (_ghosts[i]->direction == 1)//Left
+		{
+			_ghosts[i]->position->X -= _ghosts[i]->speed * elapsedTime;
+		}
+		else if (_ghosts[i]->direction == 2)//up
+		{
+			_ghosts[i]->position->Y -= _ghosts[i]->speed * elapsedTime;
+
+		}
+		else if (_ghosts[i]->direction == 3)//down
+		{
+			_ghosts[i]->position->Y += _ghosts[i]->speed * elapsedTime;
+		}
+	}
 }
 
 //Checks
@@ -371,78 +402,104 @@ bool Pacman::CollisionCheck(int x1, int y1, int width1, int height1,
 		return true;
 }
 
-void Pacman::CheckGhostCollisions(MovingEnemy* ghost, int elapsedTime)
+void Pacman::CheckGhostCollisions()
 {
-	//Variables
-	int i = 0;
-	int bottom1 = _pacman->position->Y + _pacman->sourceRect->Height;
-	int bottom2 = 0;
-	int left1 = _pacman->position->X;
-	int left2 = 0;
-	int right1 = _pacman->position->X + _pacman->sourceRect->Width;
-	int right2 = 0;
-	int top1 = _pacman->position->Y;
-	int top2 = 0;
-
-	for (i = 0; i < GHOSTCOUNT; i++)
+	//Collision with ninja
+	for (int i = 0; i < GHOSTCOUNT; i++)
 	{
-		bottom2 = _ghosts[i]->position->Y + _ghosts[i]->sourceRect->Height;
-		left2 = _ghosts[i]->position->X;
-		right2 = _ghosts[i]->position->X + _ghosts[i]->sourceRect->Width;
-		top2 = _ghosts[i]->position->Y;
-
-		if ((bottom1 > top2) && (top1 < bottom2) && (right1 > left2) && (left1 < right2))
+		if (CollisionCheck(_pacman->position->X, _pacman->position->Y, _pacman->sourceRect->Width, _pacman->sourceRect->Height,
+			_ghosts[i]->position->X, _ghosts[i]->position->Y, _ghosts[i]->sourceRect->Width, _ghosts[i]->sourceRect->Height))
 		{
 			_pacman->dead = true;
-			i = GHOSTCOUNT;
-			
 		}
-	
-		if (ghost->direction == 0)//Right
-		{
-			ghost->position->X += ghost->speed * elapsedTime;
-		}
-		else if (ghost->direction == 1)//Left
-		{
-			ghost->position->X -= ghost->speed * elapsedTime;
-		}
-		else if (ghost->direction == 2)//up
-		{
-			ghost->position->Y -= ghost->speed * elapsedTime;
-
-		}
-		else if (ghost->direction == 3)//down
-		{
-			ghost->position->Y += ghost->speed * elapsedTime;
-		}
-		for (int i = 0; i < BLOCKCOUNT; i++)
-		{
-			if (CollisionCheck(ghost->position->X, ghost->position->Y, ghost->sourceRect->Width, ghost->sourceRect->Height,
-				_map[i]->position->X, _map[i]->position->Y, _map[i]->rectangle->Width, _map[i]->rectangle->Height))
-			{
-				if (ghost->direction == 0)//Right
-				{
-					ghost->direction = 1;
-				}
-				else if(ghost->direction == 1)//Left
-				{
-					ghost->direction = 0;
-				}
-				else if (ghost->direction == 2)//up
-				{
-					ghost->direction = 3;
-
-				}
-				else if (ghost->direction == 3)//down
-				{
-					ghost->direction = 2;
-				}
-
-			}
-		}
-
 	}
-
+	//Ghost Patrol
+	//enemy 1
+	if (_ghosts[0]->position->X > 14 * 32 + 20)
+	{
+		_ghosts[0]->position->X = 14 * 32 + 18;
+		_ghosts[0]->direction = 3;
+	}
+	else if (_ghosts[0]->position->X < 2 * 32 - 6)
+	{
+		_ghosts[0]->position->X = 2 * 32 - 4;
+		_ghosts[0]->direction = 2;
+	}
+	else if (_ghosts[0]->position->Y > 5 * 32 + 10)
+	{
+		_ghosts[0]->position->Y = 5 * 32 + 8;
+		_ghosts[0]->direction = 1;
+	}
+	else if (_ghosts[0]->position->Y < 1 * 32)
+	{
+		_ghosts[0]->position->Y = 1 * 32 + 2;
+		_ghosts[0]->direction = 0;
+	}
+	//enemy 2
+	if (_ghosts[1]->position->X > 30 * 32 + 20)
+	{
+		_ghosts[1]->position->X = 30 * 32 + 18;
+		_ghosts[1]->direction = 2;
+	}
+	else if (_ghosts[1]->position->Y < 1 * 32)
+	{
+		_ghosts[1]->position->Y = 1 * 32 + 2;
+		_ghosts[1]->direction = 1;
+	}
+	else if (_ghosts[1]->position->X < 23 * 32 + 20 )
+	{
+		_ghosts[1]->position->X = 23 * 32 + 20;
+		_ghosts[1]->direction = 3;
+	}
+	else if (_ghosts[1]->position->Y > 6 * 32)
+	{
+		_ghosts[1]->position->Y = 6 * 32;
+		_ghosts[1]->direction = 0;
+	}
+	//enemy 3
+	if (_ghosts[2]->position->X > 13 * 32 + 20)
+	{
+		_ghosts[2]->position->X = 13 * 32 + 20;
+		_ghosts[2]->direction = 1;
+	}
+	else if (_ghosts[2]->position->X < 2 * 32 + 20)
+	{
+		_ghosts[2]->position->X = 2 * 32 + 20;
+		_ghosts[2]->direction = 0;
+	}
+	//enemy 4
+	if (_ghosts[3]->position->X > 29 * 32 + 20)
+	{
+		_ghosts[3]->position->X = 29 * 32 + 20;
+		_ghosts[3]->direction = 1;
+	}
+	else if (_ghosts[3]->position->X < 17 * 32 + 20)
+	{
+		_ghosts[3]->position->X = 17 * 32 + 20;
+		_ghosts[3]->direction = 0;
+	}
+	//enemy 5
+	 if (_ghosts[4]->position->X > 5 * 32 + 20)
+	{
+		_ghosts[4]->position->X = 5 * 32 + 18;
+		_ghosts[4]->direction = 3;
+	}
+	 else if (_ghosts[4]->position->X < 34 )
+	 {
+		 _ghosts[4]->position->X = 34;
+		 _ghosts[4]->direction = 2;
+	 }
+	 else if (_ghosts[4]->position->Y > 20 * 32 + 20)
+	 {
+		 _ghosts[4]->position->Y = 20 * 32 + 20;
+		 _ghosts[4]->direction = 1;
+	 }
+	 else if (_ghosts[4]->position->Y < 15 * 32 + 20)
+	 {
+		 _ghosts[4]->position->Y = 15 * 32 + 20;
+		 _ghosts[4]->direction = 0;
+	 }
+	
 }
 
 //Input
