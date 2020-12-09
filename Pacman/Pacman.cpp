@@ -47,6 +47,7 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 	_pacman->frame = 0;
 	_pacman->speedMultuplier = 1.0f;
 	_pacman->dead = false;
+	_pacman->scoreCount = 0;
 	
 
 	//Initialise important Game aspects
@@ -103,11 +104,15 @@ void Pacman::LoadContent()
 	_pacman->position = new Vector2(350.0f, 350.0f);
 	_pacman->sourceRect = new Rect(0.0f, 0.0f, 32, 32);
 	// Load Ghost Character
-	_ghosts[0]->texture = new Texture2D();
-	_ghosts[0]->texture->Load("Textures/Enemy.png", true);
-	_ghosts[0]->position = new Vector2((rand() % Graphics::GetViewportWidth()), (rand() % Graphics::GetViewportHeight()));
-	_ghosts[0]->sourceRect = new Rect(0.0f, 0.0f, 20, 20);
+	Texture2D* ghostTex = new Texture2D();
+	ghostTex->Load("Textures/Enemy.png", true);
 
+	for (int i = 0; i < GHOSTCOUNT; i++)
+	{
+		_ghosts[i]->texture = ghostTex;
+		_ghosts[i]->position = new Vector2((rand() % Graphics::GetViewportWidth()), (rand() % Graphics::GetViewportHeight()));
+		_ghosts[i]->sourceRect = new Rect(0.0f, 0.0f, 20, 20);
+	}
 	// Load munchie
 	Texture2D* munchieTex = new Texture2D();
 	munchieTex->Load("Textures/Munchie.png", false);
@@ -134,7 +139,7 @@ void Pacman::LoadContent()
 	}
 
 	//Making map
-	for (int i = 0,j = 0,k = 0; i < 768; i++) 
+	for (int i = 0,j = 0,k = 0, ghost = 0; i < 768; i++) 
 	{
 			
 			if (aMap[i] == 1) 
@@ -147,6 +152,11 @@ void Pacman::LoadContent()
 				_munchies[j]->position = new Vector2((i % 32) * 32, (i / 32) * 32);
 				j++;
 
+			}
+			if (aMap[i] == 3)
+			{
+				_ghosts[ghost]->position = new Vector2((i % 32) * 32, (i / 32) * 32);
+				ghost++;
 			}
 			
 
@@ -187,8 +197,9 @@ void Pacman::Update(int elapsedTime)
 
 			//Check functions
 			CheckViewPortCollision();
-			CheckGhostCollisions(_ghosts[0], elapsedTime);
 
+			CheckGhostCollisions(_ghosts[0], elapsedTime);
+			
 			
 
 
@@ -200,6 +211,7 @@ void Pacman::Update(int elapsedTime)
 				{
 					_munchies[i]->position->X = -100;
 					_munchies[i]->position->Y = -100;
+					_pacman->scoreCount++;
 				}
 			}
 
@@ -236,6 +248,7 @@ void Pacman::Update(int elapsedTime)
 
 		}
 	}
+		
 }
 
 void Pacman::UpdateMunchie(Enemy* munchie, int elapsedTime)
@@ -279,9 +292,8 @@ void Pacman::UpdatePacman(int elapsedTime)
 
 void Pacman::UpdateGhost(int elapsedTime)
 {
-	for (int i = 0; i < GHOSTCOUNT; i++)
-	{
 		//Frame Time
+	/*for (int i = 0; i < GHOSTCOUNT; i++)
 		_ghosts[i]->currentFrameTime += elapsedTime;
 
 		if (_ghosts[i]->currentFrameTime > _ghosts[i]->cFrametime)
@@ -291,13 +303,15 @@ void Pacman::UpdateGhost(int elapsedTime)
 				_ghosts[i]->frame = 0;
 
 			_ghosts[i]->currentFrameTime = 0;
-		}
-		//Changing ghost sprite
-		_ghosts[i]->sourceRect->Y = _ghosts[i]->sourceRect->Height * _ghosts[i]->direction;
-
-		_ghosts[i]->sourceRect->X = _ghosts[i]->sourceRect->Width * _ghosts[i]->frame;
-	}
+	}*/
 	
+		for (int i = 0; i < GHOSTCOUNT; i++)
+		{ 
+			//Changing ghost sprite
+			_ghosts[i]->sourceRect->Y = _ghosts[i]->sourceRect->Height * _ghosts[i]->direction;
+
+			_ghosts[i]->sourceRect->X = _ghosts[i]->sourceRect->Width * _ghosts[i]->frame;
+		}
 
 	
 	
@@ -381,6 +395,7 @@ void Pacman::CheckGhostCollisions(MovingEnemy* ghost, int elapsedTime)
 		{
 			_pacman->dead = true;
 			i = GHOSTCOUNT;
+			
 		}
 	
 		if (ghost->direction == 0)//Right
@@ -489,9 +504,11 @@ void Pacman::Input(int elapsedTime, Input::KeyboardState* kState, Input::MouseSt
 
 	if (keyboardState->IsKeyDown(Input::Keys::R))
 	{
-		_munchies[3]->position->X = rand() % Graphics::GetViewportHeight();
-		_munchies[3]->position->Y = rand() % Graphics::GetViewportWidth();
+		_pacman->dead = false;
+			
+
 	}
+	
 }
 
 //Draw
@@ -499,7 +516,7 @@ void Pacman::Draw(int elapsedTime)
 {
 	// Allows us to easily create a string
 	std::stringstream stream;
-	stream << "Pacman X: " << _pacman->position->X << " Y: " << _pacman->position->Y;
+	stream << "Score:" << _pacman->scoreCount;
 
 	SpriteBatch::BeginDraw(); // Starts Drawing
 	if (_gameStarted)
@@ -539,10 +556,10 @@ void Pacman::Draw(int elapsedTime)
 	//Draws Enemies
 	for (int i = 0; i < GHOSTCOUNT; i++)
 	{
-		SpriteBatch::Draw(_ghosts[0]->texture, _ghosts[0]->position, _ghosts[0]->sourceRect);
+		SpriteBatch::Draw(_ghosts[i]->texture, _ghosts[i]->position, _ghosts[i]->sourceRect);
 	}
 	
 	// Draws String
-	SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
+	SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Yellow);
 	SpriteBatch::EndDraw(); // Ends Drawing
 }
