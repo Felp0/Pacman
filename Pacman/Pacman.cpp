@@ -11,6 +11,13 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 	_pacman = new Player();
 	_menu = new Menu();
 	
+	//Sounds
+	_backFromShadow = new SoundEffect();
+	_ghostHit = new SoundEffect();
+	_roses = new SoundEffect();
+	_scroll = new SoundEffect();
+	_soundTrack = new SoundEffect();
+
 	//Munchies
 	for (int i = 0; i < MUNCHIECOUNT; i++)
 	{
@@ -18,8 +25,6 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 		_munchies[i]->currentFrameTime = 0;
 		_munchies[i]->frameCount = 0;
 		_munchies[i]->frame = rand() % 500 * 50;
-
-	
 	}
 	//Special Munchies
 	for (int i = 0; i < SPECIALMUNCHIE; i++)
@@ -45,9 +50,6 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 		_ghosts[i]->speed = 0.2f;
 		_ghosts[i]->frame = rand() % 500 * 50;
 		_ghosts[i]->currentFrameTime = 0;
-		 
-
-	
 	}
 
 	_paused = false;
@@ -62,13 +64,12 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 	_pacman->dead = false;
 	_pacman->scoreCount = 0;
 	
-
 	//Initialise important Game aspects
+	Audio::Initialise();
 	Graphics::Initialise(argc, argv, this, 1024, 736, false, 25, 25, "Pacman", 60);
 	Input::Initialise();
 
 	// Start the Game Loop - This calls Update and Draw in game loop
-	
 	Graphics::StartGameLoop();
 }
 
@@ -76,9 +77,13 @@ Pacman::~Pacman()
 {
 	delete _pacman->texture;
 	delete _pacman->sourceRect;
-	
 	delete _munchies[0]->texture;
 	delete _ghosts[0]->texture;
+	delete _backFromShadow;
+	delete _roses;
+	delete _ghostHit;
+	delete _scroll;
+	delete _soundTrack;
 	
 	for (int nCount = 0; nCount < MUNCHIECOUNT; nCount++)
 	{
@@ -104,6 +109,7 @@ Pacman::~Pacman()
 		delete _specialMunchie[nCount];
 	}
 	delete[] _specialMunchie;
+
 }
 
 void Pacman::LoadContent()
@@ -127,7 +133,12 @@ void Pacman::LoadContent()
 	_pacman->texture->Load("Textures/sprites.png", false);
 	_pacman->position = new Vector2(350.0f, 350.0f);
 	_pacman->sourceRect = new Rect(0.0f, 0.0f, 32, 32);
-
+	//Load Sounds
+	_backFromShadow->Load("Sounds/backFromShadow.wav");
+	_ghostHit->Load("Sounds/ghostHit.wav");
+	_roses->Load("Sounds/roses.wav");
+	_scroll->Load("Sounds/scroll.wav");
+	_soundTrack->Load("Sounds/soundtrack.wav");
 	// Load Ghost Character
 	Texture2D* ghostTex = new Texture2D();
 	ghostTex->Load("Textures/Enemy.png", false);
@@ -208,7 +219,6 @@ void Pacman::LoadContent()
 	
 }
 
-
 //Updates
 void Pacman::Update(int elapsedTime)
 {
@@ -216,8 +226,6 @@ void Pacman::Update(int elapsedTime)
 	// Gets the current state of the keyboard and Mouse
 	Input::KeyboardState* kState = Input::Keyboard::GetState();	
 	Input::MouseState* mState = Input::Mouse::GetState();
-
-
 
 	//Start Menu
 	if (kState->IsKeyDown(Input::Keys::SPACE))
@@ -241,6 +249,7 @@ void Pacman::Update(int elapsedTime)
 			CheckGhostCollisions();
 			
 			
+			
 
 
 			for (int i = 0; i < MUNCHIECOUNT; i++)
@@ -249,9 +258,11 @@ void Pacman::Update(int elapsedTime)
 				if (CollisionCheck(_pacman->position->X, _pacman->position->Y, _pacman->sourceRect->Width, _pacman->sourceRect->Height,
 					_munchies[i]->position->X, _munchies[i]->position->Y, _munchies[i]->rect->Width, _munchies[i]->rect->Height))
 				{
+					Audio::Play(_roses);
 					_munchies[i]->position->X = -100;
 					_munchies[i]->position->Y = -100;
 					_pacman->scoreCount++;
+
 				}
 			}
 
@@ -261,6 +272,7 @@ void Pacman::Update(int elapsedTime)
 				if (CollisionCheck(_pacman->position->X, _pacman->position->Y, _pacman->sourceRect->Width, _pacman->sourceRect->Height,
 					_specialMunchie[i]->position->X, _specialMunchie[i]->position->Y, _specialMunchie[i]->rect->Width, _specialMunchie[i]->rect->Height))
 				{
+					Audio::Play(_scroll);
 					_specialMunchie[i]->position->X = -100;
 					_specialMunchie[i]->position->Y = -100;
 					_pacman->scoreCount += 100;
@@ -465,6 +477,7 @@ void Pacman::CheckGhostCollisions()
 		if (CollisionCheck(_pacman->position->X, _pacman->position->Y, _pacman->sourceRect->Width, _pacman->sourceRect->Height,
 			_ghosts[i]->position->X, _ghosts[i]->position->Y, _ghosts[i]->sourceRect->Width, _ghosts[i]->sourceRect->Height))
 		{
+			Audio::Play(_ghostHit);
 			_pacman->dead = true;
 		}
 	}
@@ -616,6 +629,7 @@ void Pacman::Input(int elapsedTime, Input::KeyboardState* kState, Input::MouseSt
 
 	if (keyboardState->IsKeyDown(Input::Keys::R))
 	{
+		Audio::Play(_backFromShadow);
 		_pacman->dead = false;
 			
 

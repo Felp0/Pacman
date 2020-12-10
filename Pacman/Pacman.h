@@ -163,7 +163,12 @@ private:
 	// Position for String
 	Vector2* _stringPosition;
 
-	
+	//Sounds
+	SoundEffect* _backFromShadow;
+	SoundEffect* _ghostHit;
+	SoundEffect* _roses;
+	SoundEffect* _scroll;
+	SoundEffect* _soundTrack;
 
 
 public:
